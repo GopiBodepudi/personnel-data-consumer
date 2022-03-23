@@ -1,0 +1,36 @@
+# Default values for aot-supply-chain.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+app:
+  name: personnel-data-consumer
+namespace: supply-chain-qa
+replicaCount: 2
+serviceAccountName: default
+host: personnel-data-consumer-qa.maverick.aa.com
+springProfileActive: dev
+image:
+  repository: packages.aa.com/docker-dev/personnel-data-consumer
+  tag: ${{ github.event.release.tag_name }}
+  pullPolicy: Always
+keyvault:
+  springprofile: dev
+  clienturi: https://aa-aot-keyvault.vault.azure.net/  
+secretKeyRef:
+  name: keyvaultsecret
+imagePullSecrets: 
+  - name: regsecret
+service:
+  enabled: true
+  type: ClusterIP
+  port: 80
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  cpu: 2
+  memory: 1GB
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+virtualservice:
+  enabled: true
+criticality: Vital

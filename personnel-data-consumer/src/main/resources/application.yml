@@ -1,0 +1,124 @@
+spring:
+  profiles:
+    active: nonprod
+
+  cloud:
+    stream:
+      kafka:
+        bindings:
+          spe001-in-0:
+            consumer:
+              autoCommitOffset: false
+          spx001-in-0:
+            consumer:
+              autoCommitOffset: false
+          spe089-in-0:
+            consumer:
+              autoCommitOffset: false
+        default:
+          consumer:
+            binder:
+              configuration:
+                max.poll.records: 100
+                fetch.min.bytes: 1
+                fetch.max.wait.ms: 10000
+            configuration:
+              heartbeat.interval.ms: 3000
+              session.timeout.ms: 30000
+              max-poll-records: 100
+              max.poll.interval.ms: 300000
+              fetch.min.bytes: 1
+              enable.auto.commit: false
+        listener:
+          ack-mode: MANUAL_IMMEDIATE
+      bindings:
+        spe001-in-0:
+          destination: spe001
+          group: personnel
+          consumer:
+            batch-mode: true
+        spx001-in-0:
+          destination: spx001
+          group: personnel
+          consumer:
+            batch-mode: true
+        spe089-in-0:
+          destination: spe089
+          group: personnel
+          consumer:
+            batch-mode: true
+      function:
+        definition: spe001;
+
+management:
+  endpoints:
+    web:
+      base-path: /
+      exposure:
+        include:
+          - bindings
+          - health
+          - metrics
+
+logging:
+  level:
+    com.aa.techops: DEBUG
+    org.springframework.data.mongodb.core.ReactiveMongoTemplate: DEBUG
+    com.mongodb: DEBUG
+
+app:
+  name: personnel-data-consumer
+  data:
+    processor: localhost
+    port: 8080
+    path: v1/process
+
+server:
+  port: 8093
+
+---
+spring:
+  profiles: local
+  cloud:
+    stream:
+      kafka:
+        binder:
+          auto-create-topics: true
+
+server:
+  port: 8093
+
+---
+
+spring:
+  profiles: nonprod
+  cloud:
+    stream:
+      kafka:
+        binder:
+          auto-create-topics: false
+          brokers: ${event-hubs.host}
+          defaultBrokerPort: ${event-hubs.port}
+          configuration:
+            sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="$ConnectionString" password="${event-hubs.connection-string}";
+            sasl.mechanism: PLAIN
+            security.protocol: SASL_SSL
+
+event-hubs:
+  host: aot-imsi-tfp-ui-eastus-evhns.servicebus.windows.net
+  port: 9093
+  connection-string: "Endpoint=sb://aot-imsi-tfp-ui-eastus-evhns.servicebus.windows.net/;SharedAccessKeyName=ui-listen;SharedAccessKey=HtMEkovCfLPXv90PSUKNb4Qkrm6uxXF3/hH6F2AhkMY="
+
+app:
+  data:
+    processor: localhost
+
+mongo:
+  silver:
+#    uri: "mongodb+srv://DTFPTEQS_APP:SSISMIPFTDPFTP1848660846@datahub-dev-sg.gjbpj.mongodb.net/DTFPIMSIS?retryWrites=true&w=majority"
+    uri: "mongodb://localhost:27017/DTFPIMSIS?retryWrites=true&w=majority"
+    database: DTFPIMSIS
+  bronze:
+    uri: "mongodb+srv://DTFPIMSIB_RO:JF2eG8rmcIisHXkT@datahub-dev.gjbpj.mongodb.net/test?authSource=admin&replicaSet=atlas-3312z4-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true"
+#    uri: "mongodb://localhost:27017/DTFPIMSIS?retryWrites=true&w=majority"
+    database: DTFPIMSIB
